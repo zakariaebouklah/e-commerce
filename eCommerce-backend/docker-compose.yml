@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+###> doctrine/doctrine-bundle ###
+  nginx:
+    container_name: nginx
+    build:
+      dockerfile: ./nginx/Dockerfile
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "80:80"
+    networks:
+      - my-network
+  php:
+    container_name: php
+    build:
+      dockerfile: ./php/Dockerfile
+    volumes:
+      - ./public:/var/www/html/public
+      - /var/www/html/var
+      - /var/www/html/vendor
+    ports:
+      - "8000:8000"
+    networks:
+      - my-network
+  database:
+    image: postgres:${POSTGRES_VERSION:-15}-alpine
+    restart: unless-stopped
+    container_name: postgres
+    environment:
+      POSTGRES_DB: market
+      POSTGRES_PASSWORD: rootroot
+    ports:
+      - "5432:5432"
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+    networks:
+      - my-network
+  next-js:
+    build:
+      context: ../eCommerce-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../eCommerce-frontend/.env
+    networks:
+      - my-network
+###< doctrine/doctrine-bundle ###
+
+networks:
+  my-network:
+
+volumes:
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
